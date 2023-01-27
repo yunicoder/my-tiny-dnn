@@ -146,6 +146,27 @@ class batch_normalization_layer : public layer {
     // y = (x - mean) ./ sqrt(variance + eps)
     calc_stddev(variance);
 
+    // if (phase_ == net_phase::test) {
+    //   std::cout << "--------------------------------------------\n";
+    //   std::cout << "mean: ";
+    //   for (size_t j = 0; j < in_channels_; j++) {
+    //     std::cout << mean[j] << " ";
+    //   }
+    //   std::cout << "\n";
+
+    //   std::cout << "stddev_: ";
+    //   for (size_t j = 0; j < in_channels_; j++) {
+    //     std::cout << stddev_[j] << " ";
+    //   }
+    //   std::cout << "\n";
+
+    //   std::cout << "variance_: ";
+    //   for (size_t j = 0; j < in_channels_; j++) {
+    //     std::cout << variance_[j] << " ";
+    //   }
+    //   std::cout << "\n";
+    // }
+
     for_i(in_data[0]->size(), [&](size_t i) {
       const float_t *inptr = &in[i][0];
       float_t *outptr      = &out[i][0];
@@ -171,9 +192,11 @@ class batch_normalization_layer : public layer {
 
   void post_update() override {
     for (size_t i = 0; i < mean_.size(); i++) {
-      mean_[i] = momentum_ * mean_[i] + (1 - momentum_) * mean_current_[i];
-      variance_[i] =
-        momentum_ * variance_[i] + (1 - momentum_) * variance_current_[i];
+      mean_[i] = (mean_[i] == 0) ? mean_current_[i]
+          : momentum_ * mean_[i] + (1 - momentum_) * mean_current_[i];
+      
+      variance_[i] = (variance_[i] == 0) ? variance_current_[i]
+          : momentum_ * variance_[i] + (1 - momentum_) * variance_current_[i];
     }
   }
 
