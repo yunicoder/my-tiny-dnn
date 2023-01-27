@@ -171,9 +171,11 @@ class batch_normalization_layer : public layer {
 
   void post_update() override {
     for (size_t i = 0; i < mean_.size(); i++) {
-      mean_[i] = momentum_ * mean_[i] + (1 - momentum_) * mean_current_[i];
-      variance_[i] =
-        momentum_ * variance_[i] + (1 - momentum_) * variance_current_[i];
+      mean_[i] = (mean_[i] == 0) ? mean_current_[i]
+          : momentum_ * mean_[i] + (1 - momentum_) * mean_current_[i];
+      
+      variance_[i] = (variance_[i] == 0) ? variance_current_[i]
+          : momentum_ * variance_[i] + (1 - momentum_) * variance_current_[i];
     }
   }
 
