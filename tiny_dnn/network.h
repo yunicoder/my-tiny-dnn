@@ -466,21 +466,12 @@ class network {
     for (size_t i = 0; i < in.size(); i++) {
       const label_t predicted = fprop_max_index(in[i]);
       const label_t actual    = t[i];
-
-      // const vec_t prediction = predict(in[i]);
-      // std::cout << "prediction: "; 
-      // for (int i = 0; i < prediction.size(); ++i){
-      //   std::cout << prediction[i] << " ";
-      // }
-      // std::cout << "\n";
-
-      // std::cout << "pred:" << predicted << "actual:" << actual << std::endl;
-
+      
       if (predicted == actual) test_result.num_success++;
       test_result.num_total++;
       test_result.confusion_matrix[predicted][actual]++;
     }
-    set_netphase(net_phase::train);  // train phaseに戻す
+    set_netphase(net_phase::train);  // push back to train phase
     return test_result;
   }
 
