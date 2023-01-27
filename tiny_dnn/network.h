@@ -465,6 +465,7 @@ class network {
       test_result.num_total++;
       test_result.confusion_matrix[predicted][actual]++;
     }
+    set_netphase(net_phase::train);  // push back to train phase
     return test_result;
   }
 
