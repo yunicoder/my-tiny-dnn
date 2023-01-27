@@ -200,13 +200,7 @@ class network {
   }
 
   std::vector<tensor_t> fprop(const std::vector<tensor_t> &in) {
-    auto res = net_.forward(in);
-    /*std::cout << "res: ";
-    for (int i = 0; i < res[0][0].size(); ++i) {
-      std::cout << res[0][0][i] << " ";
-    }
-    std::cout << "\n";*/
-    return res;
+    return net_.forward(in);
   }
 
   /**
@@ -466,7 +460,7 @@ class network {
     for (size_t i = 0; i < in.size(); i++) {
       const label_t predicted = fprop_max_index(in[i]);
       const label_t actual    = t[i];
-      
+
       if (predicted == actual) test_result.num_success++;
       test_result.num_total++;
       test_result.confusion_matrix[predicted][actual]++;
