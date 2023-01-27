@@ -279,3 +279,23 @@ Feel free to join us!
     <td> https://gitter.im/tiny-dnn/users </td>
 </tr>
 </table>
+
+## deepthin run example
+```
+1. ビルド用ディレクトリの作成
+$ cd .
+$ mkdir build
+
+2. BUILD_EXAMPLESをONにしてコンフィグする
+$ cd build
+$ cmake .. -DBUILD_EXAMPLES=ON  
+
+3. MNISTサンプルをコンパイルする
+$ cd example 
+$ make example_mnist_train  
+
+4. MNISTサンプルを実行する
+$ ./example_mnist_train --data_path ../../data  
+or
+$ ./example_mnist_train --data_path ../../data --epochs 1 --minibatch_size 32 --backend_type internal
+```
