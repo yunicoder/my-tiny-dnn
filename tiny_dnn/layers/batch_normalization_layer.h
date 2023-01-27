@@ -146,27 +146,6 @@ class batch_normalization_layer : public layer {
     // y = (x - mean) ./ sqrt(variance + eps)
     calc_stddev(variance);
 
-    // if (phase_ == net_phase::test) {
-    //   std::cout << "--------------------------------------------\n";
-    //   std::cout << "mean: ";
-    //   for (size_t j = 0; j < in_channels_; j++) {
-    //     std::cout << mean[j] << " ";
-    //   }
-    //   std::cout << "\n";
-
-    //   std::cout << "stddev_: ";
-    //   for (size_t j = 0; j < in_channels_; j++) {
-    //     std::cout << stddev_[j] << " ";
-    //   }
-    //   std::cout << "\n";
-
-    //   std::cout << "variance_: ";
-    //   for (size_t j = 0; j < in_channels_; j++) {
-    //     std::cout << variance_[j] << " ";
-    //   }
-    //   std::cout << "\n";
-    // }
-
     for_i(in_data[0]->size(), [&](size_t i) {
       const float_t *inptr = &in[i][0];
       float_t *outptr      = &out[i][0];
