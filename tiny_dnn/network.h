@@ -490,15 +490,15 @@ class network {
     float_t sum_loss = float_t(0);
 
     std::vector<tensor_t> label_tensor;
-    normalize_tensor(t, label_tensor);
+    normalize_tensor(t, label_tensor);  // one-hot encoding
 
+    set_netphase(net_phase::test);
     for (size_t i = 0; i < in.size(); i++) {
       const vec_t predicted = predict(in[i]);
-      for (size_t j = 0; j < predicted.size(); j++) {
-        sum_loss += E::f(predicted, label_tensor[i][j]);
-      }
+      sum_loss += E::f(predicted, label_tensor[i][0]);
     }
-    return sum_loss;
+    set_netphase(net_phase::train);
+    return sum_loss / in.size();
   }
 
   /**
