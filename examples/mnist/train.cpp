@@ -14,6 +14,12 @@
 #include <algorithm>
 #include <random>
 
+#include <sys/socket.h> //アドレスドメイン
+#include <sys/types.h>  //ソケットタイプ
+#include <arpa/inet.h>  //バイトオーダの変換に利用
+#include <unistd.h>     //close()に利用
+#include <string>       //string型
+
 using namespace std;
 
 #include "tiny_dnn/tiny_dnn.h"
@@ -142,6 +148,29 @@ static void train_lenet(const std::string &data_dir_path,
   std::cout << "test_images size : " << test_images.size() << std::endl;
   std::cout << "test_labels size : " << test_labels.size() << std::endl;
 
+  /************************結果受信用ソケット************************************/
+  /* IP アドレス、ポート番号、ソケット */
+  char destination[] = "127.0.0.1";
+  unsigned short port = 8080;
+  int dstSocket;
+
+  /* sockaddr_in 構造体 */
+  struct sockaddr_in dstAddr;
+
+  /* sockaddr_in 構造体のセット */
+  memset(&dstAddr, 0, sizeof(dstAddr));
+  dstAddr.sin_port = htons(port);
+  dstAddr.sin_family = AF_INET;
+  dstAddr.sin_addr.s_addr = inet_addr(destination);
+
+  /* ソケット生成 */
+  dstSocket = socket(AF_INET, SOCK_STREAM, 0);
+
+  /* 接続 */
+  printf("Trying to connect to %s: \n", destination);
+  connect(dstSocket, (struct sockaddr *) &dstAddr, sizeof(dstAddr));
+
+  /************************結果受信用ソケット************************************/
 
   tiny_dnn::progress_display disp(train_images.size());
   tiny_dnn::timer t;
@@ -152,10 +181,35 @@ static void train_lenet(const std::string &data_dir_path,
     std::cout << "Epoch " << epoch << "/" << n_train_epochs << " finished. "
               << t.elapsed() << "s elapsed." << std::endl;
 
-    ++epoch;
-    tiny_dnn::result res = nn.test(test_images, test_labels);
-    std::cout << res.num_success << "/" << res.num_total << std::endl;
+    // lossの計算
+    std::cout << "calculate loss..." << std::endl;
+    auto train_loss = nn.get_loss<tiny_dnn::mse>(train_images, train_labels);
+    auto test_loss = nn.get_loss<tiny_dnn::mse>(test_images, test_labels);
 
+    // accuracyの計算
+    std::cout << "calculate accuracy..." << std::endl;
+    tiny_dnn::result train_results = nn.test(train_images, train_labels);
+    tiny_dnn::result test_results = nn.test(test_images, test_labels);
+    float_t train_accuracy = (float_t)train_results.num_success * 100 / train_results.num_total;
+    float_t test_accuracy = (float_t)test_results.num_success * 100 / test_results.num_total;
+
+    std::cout << "train loss: " << train_loss << " test loss: " << test_loss << std::endl;
+    std::cout << "train accuracy: " << train_accuracy << "% test accuracy: " << test_accuracy << "%" << std::endl;
+
+    // データ送信 (train_loss,test_loss,train_accuracy,test_accuracy を送る)
+    auto send_str = std::to_string(train_loss) + "," + std::to_string(test_loss);  // loss
+    send_str += "," + std::to_string(train_accuracy) + "," + std::to_string(test_accuracy);  // accuracy
+    char* send_char = const_cast<char*>(send_str.c_str());
+    send(dstSocket, send_char, 40, 0);   // 送信
+    std::cout << send_char << std::endl;
+
+    // きちんと送れたか応答確認
+    char reccieved_message[128];
+    recv(dstSocket, reccieved_message, sizeof(reccieved_message), 0);
+    printf("reccieved_message: %s\n", reccieved_message);
+
+
+    ++epoch;
     disp.restart(train_images.size());
     t.restart();
   };
@@ -168,6 +222,9 @@ static void train_lenet(const std::string &data_dir_path,
                           on_enumerate_epoch);
 
   std::cout << "end training." << std::endl;
+
+  // close socket
+  close(dstSocket);
 
   // test and show results
   nn.test(test_images, test_labels).print_detail(std::cout);
